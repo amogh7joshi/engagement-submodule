@@ -4,14 +4,13 @@ import os
 import sys
 import fnmatch
 import subprocess
-
-import cv2
+import argparse
 
 # Preprocessing Script for the DAiSEE Engagement Detection Dataset.
 
-datadir = os.path.join(os.path.dirname(__file__), 'daisee-dataset', 'Dataset')
-
-def split_video():
+def split_video(datadir = None):
+    if datadir is None: # Default Data Directory
+        datadir = os.path.join(os.path.dirname(__file__), 'daisee-dataset', 'Dataset')
     def split(video_file, image_name_prefix, destination_path):
         return subprocess.run(
             'ffmpeg -i "' + os.path.join(destination_path, video_file) + '" ' + image_name_prefix + '%d.jpg -hide_banner',
@@ -57,5 +56,11 @@ def remove_files():
                 os.remove(os.path.join(dirpath, file))
 
 if __name__ == '__main__':
-    split_video()
+    # Parse command line arguments.
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-d', '--directory', default = None,
+                    help = "The directory where the dataset is located.")
+    args = vars(ap.parse_args())
+    # Perform video processing.
+    split_video(datadir = args['directory'])
 
