@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+.idea/
+.DS_Store
+
+# Personal files and directories.
+data/daisee-dataset/
+data/dnnfile/
+!data/dnnfile/.gitignore
+data/tfrecords/
+!data/tfrecords/.gitignore
