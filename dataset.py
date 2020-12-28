@@ -17,6 +17,8 @@ import tensorflow as tf
 
 np.random.seed(0)
 
+__all__ = ['Dataset']
+
 class Dataset(object):
    """
    Dataset class for the DAiSEE dataset.
@@ -339,8 +341,8 @@ class Dataset(object):
                   if _c < 0.5:
                      pass
                   _coords = faces[0, 0, 0, 3:7] * \
-                                   np.array([self.image_size[0], self.image_size[1],
-                                             self.image_size[0], self.image_size[1]])
+                            np.array([self.image_size[0], self.image_size[1],
+                                      self.image_size[0], self.image_size[1]])
                   (x, y, xe, ye) = _coords.astype("int")
                   _face_detected = image[y: ye, x: xe]
             except Exception as e:
@@ -464,8 +466,7 @@ class Dataset(object):
       """Primary method (called by user) to construct TFRecords from the dataset."""
       if overwrite is False:
          self._is_parsed(directory, _warn = True)
-      else:
-         self._write_tf_record(directory, data_augmentation = data_augmentation)
+      self._write_tf_record(directory, data_augmentation = data_augmentation)
 
    def load(self, path = None):
       """Primary method (called by user) to gather the TFRecord files of the dataset and convert to usable format."""
@@ -539,5 +540,7 @@ if __name__ == '__main__':
       overwrite = args['overwrite'],
       data_augmentation = True
    )
+else:
+   print(__name__)
 
 
