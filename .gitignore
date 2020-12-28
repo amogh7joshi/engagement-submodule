@@ -4,6 +4,7 @@ __pycache__/
 .DS_Store
 
 # Personal files and directories.
+**test*.py
 data/daisee-dataset/
 data/dnnfile/
 !data/dnnfile/.gitignore

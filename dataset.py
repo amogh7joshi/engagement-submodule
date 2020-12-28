@@ -30,6 +30,11 @@ class Dataset(object):
       # Get dataset attributes.
       self.train_labels, self.validation_labels, self.test_labels = self._read_labels()
 
+      # Get usable datasets.
+      self._train_data = None
+      self._validation_data = None
+      self._test_data = None
+
    def __getattr__(self, item):
       """Account for any code mistakes."""
       if item == 'cascade_path' and self.detector != 'cascade':
@@ -42,6 +47,36 @@ class Dataset(object):
    def __contains__(self, item):
       """Determine whether video ID is in class."""
       return self._is_video(item)
+
+   @property
+   def train_data(self):
+      """Training data accessor."""
+      return self._train_data
+
+   @train_data.setter
+   def train_data(self, value):
+      """Internal setter for training data."""
+      self._train_data = value
+
+   @property
+   def validation_data(self):
+      """Validation data accessor."""
+      return self._validation_data
+
+   @validation_data.setter
+   def validation_data(self, value):
+      """Internal setter for validation data"""
+      self._validation_data = value
+
+   @property
+   def test_data(self):
+      """Test data accessor."""
+      return self._test_data
+
+   @test_data.setter
+   def test_data(self, value):
+      """Internal setter for test data."""
+      self._test_data = value
 
    def _parse_kwargs(self, kwargs) -> None:
       """Internal method to parse keyword arguments."""
@@ -223,6 +258,20 @@ class Dataset(object):
          return True
       return False
 
+   def _is_parsed(self, outdir, _warn = False):
+      """Internal method and attribute to determine whether there is existing parsed data."""
+      if not os.path.exists(outdir): # If the directory does not exist.
+         raise OSError(f"The data path {outdir} does not exist.")
+      if len(os.listdir(outdir)) == 0: # If the directory is empty.
+         return False
+      else: # Iterate over items in directory.
+         for item in os.listdir(outdir):
+            if item in ['train.tfrecords', 'validation.tfrecords', 'test.tfrecords']:
+               if _warn:
+                  raise FileExistsError(f"The file {item} already exists, if you want to overwrite data set 'overwrite' to True.")
+               else:
+                  self._parsed = True
+
    def _resize(self, image):
       """Utility method to resize an image to the necessary specifications."""
       return cv2.resize(image, dsize = (self.image_size[0], self.image_size[1]), interpolation = cv2.INTER_AREA)
@@ -326,7 +375,7 @@ class Dataset(object):
          value = value.numpy()
       return tf.train.Feature(bytes_list = tf.train.BytesList(value = [value]))
 
-   def write_tf_record(self, outdir, data_augmentation = False):
+   def _write_tf_record(self, outdir, data_augmentation = False):
       """Propietrary method to write and store TFRecord of dataset."""
       if not os.path.exists(outdir): # Use or create output dataset.
          try:
@@ -405,6 +454,13 @@ class Dataset(object):
 
       return image, label
 
+   def construct(self, directory, overwrite = False, data_augmentation = False):
+      """Primary method (called by user) to construct TFRecords from the dataset."""
+      if overwrite is False:
+         self._is_parsed(directory, _warn = True)
+      else:
+         self._write_tf_record(directory, data_augmentation = data_augmentation)
+
 if __name__ == '__main__':
    # Parse command-line arguments.
    ap = argparse.ArgumentParser()
@@ -412,10 +468,15 @@ if __name__ == '__main__':
                    help = "The detector to use for facial detection.")
    ap.add_argument('-d', '--directory', default = os.path.join(os.path.dirname(__file__), 'data/tfrecords/'),
                    help = "The directory to save the TFRecords to.")
+   ap.add_argument('-o', '--overwrite', default = False, type = bool,
+                   help = "If you want to overwrite existing parsed data.")
    args = vars(ap.parse_args())
 
    # Perform preprocessing.
-   preprocessor = Dataset(detector = args['detector'])
-   preprocessor.write_tf_record(args['directory'], data_augmentation = True)
+   Dataset(detector = args['detector']).construct(
+      args['directory'],
+      overwrite = args['overwrite'],
+      data_augmentation = True
+   )
 
 
