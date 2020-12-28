@@ -35,6 +35,12 @@ class Dataset(object):
       self._validation_data = None
       self._test_data = None
 
+   def __call__(self, detector = None, **kwargs):
+      """Allow updates to class attributes."""
+      self.detector_name = detector
+      self._parse_kwargs(kwargs)
+      self._initialize_detector()
+
    def __getattr__(self, item):
       """Account for any code mistakes."""
       if item == 'cascade_path' and self.detector != 'cascade':
@@ -376,7 +382,7 @@ class Dataset(object):
       return tf.train.Feature(bytes_list = tf.train.BytesList(value = [value]))
 
    def _write_tf_record(self, outdir, data_augmentation = False):
-      """Propietrary method to write and store TFRecord of dataset."""
+      """Proprietary method to write and store TFRecord of dataset."""
       if not os.path.exists(outdir): # Use or create output dataset.
          try:
             os.makedirs(outdir)
@@ -461,8 +467,63 @@ class Dataset(object):
       else:
          self._write_tf_record(directory, data_augmentation = data_augmentation)
 
+   def load(self, path = None):
+      """Primary method (called by user) to gather the TFRecord files of the dataset and convert to usable format."""
+      if path:
+         if not os.path.exists(path):
+            raise OSError(f"The directory path {path} does not exist.")
+      else:
+         path = os.path.join(os.path.dirname(__file__), 'data/tfrecords')
+
+      # Load training data.
+      _training_path = os.path.join(path, 'train.tfrecords')
+      if not os.path.exists(_training_path):
+         raise FileNotFoundError(f"The file {_training_path} does not exist, please re-construct dataset.")
+      try:
+         _train_set = tf.data.TFRecordDataset(_training_path)
+         _train_set = _train_set.map(self.decode)
+         _train_set = _train_set.shuffle(1)
+         _train_set.batch(32)
+         self.train_data = _train_set
+      except Exception as e:
+         raise e
+      finally:
+         del _training_path, _train_set
+
+      # Load validation data.
+      _validation_path = os.path.join(path, 'validation.tfrecords')
+      if not os.path.exists(_validation_path):
+         raise FileNotFoundError(f"The file {_validation_path} does not exist, please re-construct dataset.")
+      try:
+         _validation_set = tf.data.TFRecordDataset(_validation_path)
+         _validation_set = _validation_set.map(self.decode)
+         _validation_set = _validation_set.shuffle(1)
+         _validation_set.batch(32)
+         self.validation_data = _validation_set
+      except Exception as e:
+         raise e
+      finally:
+         del _validation_path, _validation_set
+
+      # Load test data.
+      _test_path = os.path.join(path, 'test.tfrecords')
+      if not os.path.exists(_test_path):
+         raise FileNotFoundError(f"The file {_test_path} does not exist, please re-construct dataset.")
+      try:
+         _test_set = tf.data.TFRecordDataset(_test_path)
+         _test_set = _test_set.map(self.decode)
+         _test_set = _test_set.shuffle(1)
+         _test_set.batch(32)
+         self.test_data = _test_set
+      except Exception as e:
+         raise e
+      finally:
+         del _test_path, _test_set
+
+      return self.train_data, self.validation_data, self.test_data
+
 if __name__ == '__main__':
-   # Parse command-line arguments.
+   # Parse command line arguments.
    ap = argparse.ArgumentParser()
    ap.add_argument('-e', '--detector', default = 'dnn',
                    help = "The detector to use for facial detection.")
