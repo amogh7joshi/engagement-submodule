@@ -53,8 +53,24 @@ class Dataset(object):
          raise AttributeError(f"No such attribute {item} in class Dataset.")
 
    def __contains__(self, item):
-      """Determine whether video ID is in class."""
+      """Determine whether video ID is in dataset."""
       return self._is_video(item)
+
+   def __len__(self):
+      """Number of videos in the dataset."""
+      _label_loc = os.path.join(self.dataset_path, 'Labels')
+
+      # Read csv containing all Clip IDs.
+      try:
+         all_df = pd.read_csv(os.path.join(_label_loc, 'AllLabels.csv'))
+      except FileNotFoundError:
+         raise FileNotFoundError("One or more of the label-containing files is missing.")
+      except Exception as e:
+         raise e
+      finally:
+         del _label_loc
+
+      return len(all_df.ClipID)
 
    @property
    def train_data(self):
@@ -247,8 +263,9 @@ class Dataset(object):
          del _label_loc
 
       # Remove trailing space in attributes.
-      for df in [train_df, validation_df, test_df]:
-         df = df.rename(columns = {'Frustration ': 'Frustration'})
+      train_df = train_df.rename(columns = {'Frustration ': 'Frustration'})
+      validation_df = validation_df.rename(columns={'Frustration ': 'Frustration'})
+      test_df = test_df.rename(columns={'Frustration ': 'Frustration'})
 
       return train_df, validation_df, test_df
 
@@ -310,7 +327,7 @@ class Dataset(object):
       # Brightness
       _brightness = tf.image.adjust_brightness(image, 0.4).numpy()
       # Contrast
-      _contrast = tf.image.adjust_contrast(image, lower = 0.0, upper = 1.0).numpy()
+      _contrast = tf.image.random_contrast(image, lower = 0.0, upper = 1.0).numpy()
 
       # Resize and return list of augmented images.
       return [self._resize(_image) for _image in [_flipped, _transposed, _saturated, _brightness, _contrast]]
@@ -362,14 +379,14 @@ class Dataset(object):
       _video = image.split("/")[-2]
       label_series = label_df.loc[((label_df.ClipID == _video + '.avi') | (label_df.ClipID == _video + '.mp4'))]
       try:
-         indx = label_series.values[0]
-         label = np.array([label_series.Boredom.get(indx)],
-                          [label_series.Engagement.get(indx)],
-                          [label_series.Confusion.get(indx)],
-                          [label_series.Frustration.get(indx)])
+         indx = label_series.index.values[0]
+         label = np.array([label_series['Boredom'].get(indx),
+                          label_series['Engagement'].get(indx),
+                          label_series['Confusion'].get(indx),
+                          label_series['Frustration'].get(indx)])
          _one_hot = label.astype(np.uint8) # Turn into one-hot-encoded vectors.
       except:
-         #print(f"Encountered error in image {image}.")
+         print(f"Encountered error in image {image}.")
          _one_hot = ''
          _encountered_error = True
       finally:
@@ -392,6 +409,10 @@ class Dataset(object):
             raise ose
          except Exception as e:
             raise e
+
+      for file in ['train.tfrecords', 'validation.tfrecords', 'test.tfrecords']:
+         if file in os.listdir(outdir): # Remove existing data files.
+            os.remove(os.path.join(outdir, file))
 
       # Create objects to iterate over.
       _dataset_path = os.path.join(self.dataset_path, 'Dataset')
@@ -530,7 +551,7 @@ if __name__ == '__main__':
                    help = "The detector to use for facial detection.")
    ap.add_argument('-d', '--directory', default = os.path.join(os.path.dirname(__file__), 'data/tfrecords/'),
                    help = "The directory to save the TFRecords to.")
-   ap.add_argument('-o', '--overwrite', default = False, type = bool,
+   ap.add_argument('-o', '--overwrite', default = True, type = bool,
                    help = "If you want to overwrite existing parsed data.")
    args = vars(ap.parse_args())
 
@@ -540,7 +561,6 @@ if __name__ == '__main__':
       overwrite = args['overwrite'],
       data_augmentation = True
    )
-else:
-   print(__name__)
+
 
 
