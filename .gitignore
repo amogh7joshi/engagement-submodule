@@ -10,3 +10,5 @@ data/dnnfile/
 !data/dnnfile/.gitignore
 data/tfrecords/
 !data/tfrecords/.gitignore
+logs/
+models/

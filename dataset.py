@@ -505,7 +505,7 @@ class Dataset(object):
          _train_set = tf.data.TFRecordDataset(_training_path)
          _train_set = _train_set.map(self.decode)
          _train_set = _train_set.shuffle(1)
-         _train_set.batch(32)
+         _train_set = _train_set.batch(32)
          self.train_data = _train_set
       except Exception as e:
          raise e
@@ -520,7 +520,7 @@ class Dataset(object):
          _validation_set = tf.data.TFRecordDataset(_validation_path)
          _validation_set = _validation_set.map(self.decode)
          _validation_set = _validation_set.shuffle(1)
-         _validation_set.batch(32)
+         _validation_set = _validation_set.batch(32)
          self.validation_data = _validation_set
       except Exception as e:
          raise e
@@ -535,7 +535,7 @@ class Dataset(object):
          _test_set = tf.data.TFRecordDataset(_test_path)
          _test_set = _test_set.map(self.decode)
          _test_set = _test_set.shuffle(1)
-         _test_set.batch(32)
+         _test_set = _test_set.batch(32)
          self.test_data = _test_set
       except Exception as e:
          raise e
