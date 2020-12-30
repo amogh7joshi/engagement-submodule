@@ -78,7 +78,3 @@ for epoch in range(10):
       tf.keras.models.save_model(model, os.path.join(checkpoint_dir, f'Epoch-{model}.h5'), save_format = 'h5')
 
 
-
-
-
-
