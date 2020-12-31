@@ -9,13 +9,14 @@ import argparse
 # Preprocessing Script for the DAiSEE Engagement Detection Dataset.
 
 def split_video(datadir = None):
-    if datadir is None: # Default Data Directory
-        datadir = os.path.join(os.path.dirname(__file__), 'daisee-dataset', 'Dataset')
     def split(video_file, image_name_prefix, destination_path):
         return subprocess.run(
             'ffmpeg -i "' + os.path.join(destination_path, video_file) + '" ' + image_name_prefix + '%d.jpg -hide_banner',
             shell = True, cwd = destination_path
         )
+
+    if datadir is None: # Default Data Directory
+        datadir = os.path.join(os.path.dirname(__file__), 'daisee-dataset', 'Dataset')
 
     # Get Train, Validation, and Test Datasets.
     i = 0
