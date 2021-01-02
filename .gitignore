@@ -12,3 +12,7 @@ data/tfrecords/
 !data/tfrecords/.gitignore
 logs/
 models/
+
+# Temporary
+network.py
+lstm.py
