@@ -39,11 +39,11 @@ def test_step(x, y, set_name):
 
 # Define Model Architectures.
 model = light_network()
-optimizer = tf.keras.optimizers.Adam()
+optimizer = tf.keras.optimizers.Adam(lr = 0.01)
 train_loss_avg = tf.keras.metrics.Mean()
-train_accuracy = tf.keras.metrics.MeanAbsoluteError()
-validation_accuracy = tf.keras.metrics.MeanAbsoluteError()
-test_accuracy = tf.keras.metrics.MeanAbsoluteError()
+train_accuracy = tf.keras.metrics.MeanSquaredError()
+validation_accuracy = tf.keras.metrics.MeanSquaredError()
+test_accuracy = tf.keras.metrics.MeanSquaredError()
 
 # Create and Validate Training Logs and Model Checkpoint Directories.
 log_dir = os.path.join(os.path.dirname(__file__), 'logs')
@@ -70,8 +70,8 @@ for epoch in range(10):
    # Write training log.
    with train_summary_writer.as_default():
       tf.summary.scalar('Training Loss', train_loss_avg.result(), step = epoch)
-      tf.summary.scalar('Training MAE', train_acc, step = epoch)
-      tf.summary.scalar('Validation MAE', validation_acc, step = epoch)
+      tf.summary.scalar('Training MSE', train_acc, step = epoch)
+      tf.summary.scalar('Validation MSE', validation_acc, step = epoch)
 
    # Save every fifth model.
    if epoch % 5 == 0:
